@@ -13,7 +13,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.lzy.myapplication"
+        applicationId = "com.lzy.myapplication.version1.1"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
