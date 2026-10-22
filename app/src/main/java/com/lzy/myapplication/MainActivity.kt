@@ -4,44 +4,23 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import com.lzy.myapplication.ui.theme.PiggyTheme
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.lzy.myapplication.navigation.AppNavigation
+import com.lzy.myapplication.ui.theme.MeetingTheme
+import com.lzy.myapplication.viewmodel.MeetingViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            PiggyTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+            // 套用商务风格主题 💼
+            MeetingTheme {
+                // 创建 ViewModel（管理所有页面状态）
+                val viewModel: MeetingViewModel = viewModel()
+                // 启动导航（显示各个页面）
+                AppNavigation(viewModel = viewModel)
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    PiggyTheme {
-        Greeting("Android")
     }
 }

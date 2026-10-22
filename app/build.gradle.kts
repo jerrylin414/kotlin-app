@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.ksp)  // 用于 Room 数据库的代码生成
 }
 
 android {
@@ -12,7 +13,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.lzy.myapplication"
+        applicationId = "com.lzy.myapplication.meeting"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
@@ -53,4 +54,18 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
+    implementation(libs.androidx.compose.material.icons.extended)
+
+    // Room 数据库（保存会议历史记录）
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
+
+    // 导航（页面之间跳转）
+    implementation(libs.androidx.navigation.compose)
+
+    // ViewModel（管理页面状态）
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.lifecycle.runtime.compose)
+
 }

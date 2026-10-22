@@ -7,54 +7,60 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
+// 浅色主题配置
 private val LightColorScheme = lightColorScheme(
-    primary = Coral,
+    primary = PrimaryBlue,
     onPrimary = Color.White,
-    primaryContainer = PeachPink,
-    onPrimaryContainer = TextPrimary,
-    secondary = BabyBlue,
+    primaryContainer = Color(0xFFD6E0FA),
+    onPrimaryContainer = PrimaryBlueDark,
+    secondary = AccentGreen,
     onSecondary = Color.White,
-    secondaryContainer = SoftMint,
-    onSecondaryContainer = TextPrimary,
-    tertiary = Lavender,
+    secondaryContainer = Color(0xFFD5F5E3),
+    onSecondaryContainer = AccentGreenDark,
+    tertiary = AccentOrange,
     onTertiary = Color.White,
-    tertiaryContainer = CreamYellow,
-    onTertiaryContainer = TextPrimary,
-    background = Color(0xFFFFFBFF),
+    tertiaryContainer = Color(0xFFFDEBD0),
+    onTertiaryContainer = AccentOrangeDark,
+    background = BackgroundLight,
     onBackground = TextPrimary,
-    surface = Color(0xFFFFFBFF),
+    surface = SurfaceLight,
     onSurface = TextPrimary,
-    surfaceVariant = Color(0xFFF5F0F4),
+    surfaceVariant = Color(0xFFE8ECF1),
     onSurfaceVariant = TextSecondary,
-    outline = Color(0xFFD0C8D0),
-    outlineVariant = Color(0xFFE8E0E8)
+    outline = Color(0xFFC0CDE0),
+    outlineVariant = Color(0xFFD8E0EC)
 )
 
+// 深色主题配置
 private val DarkColorScheme = darkColorScheme(
-    primary = CoralDark,
+    primary = Color(0xFF6C8EE0),
     onPrimary = Color.White,
-    primaryContainer = PeachPinkDark,
+    primaryContainer = PrimaryBlueDark,
     onPrimaryContainer = Color.White,
-    secondary = BabyBlueDark,
+    secondary = Color(0xFF58D68D),
     onSecondary = Color.White,
-    secondaryContainer = SoftMintDark,
+    secondaryContainer = AccentGreenDark,
     onSecondaryContainer = Color.White,
-    tertiary = LavenderDark,
+    tertiary = Color(0xFFF5B041),
     onTertiary = Color.White,
-    tertiaryContainer = CreamYellowDark,
+    tertiaryContainer = AccentOrangeDark,
     onTertiaryContainer = Color.White,
-    background = Color(0xFF1C1B1F),
-    onBackground = Color(0xFFE6E1E5),
-    surface = Color(0xFF1C1B1F),
-    onSurface = Color(0xFFE6E1E5),
-    surfaceVariant = Color(0xFF2D2B30),
-    onSurfaceVariant = Color(0xFFCAC4D0),
-    outline = Color(0xFF49454F),
-    outlineVariant = Color(0xFF49454F)
+    background = BackgroundDark,
+    onBackground = Color(0xFFE0E0E0),
+    surface = SurfaceDark,
+    onSurface = Color(0xFFE0E0E0),
+    surfaceVariant = Color(0xFF2D2D2D),
+    onSurfaceVariant = Color(0xFFB0B0B0),
+    outline = Color(0xFF505050),
+    outlineVariant = Color(0xFF404040)
 )
 
+/**
+ * App 主题 🎨
+ * 自动跟随系统深色/浅色模式
+ */
 @Composable
-fun PiggyTheme(
+fun MeetingTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
