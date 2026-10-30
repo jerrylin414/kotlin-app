@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Savings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -17,16 +18,14 @@ import androidx.navigation.compose.rememberNavController
 import com.lzy.myapplication.data.Expense
 import com.lzy.myapplication.data.ExpenseCategory
 import com.lzy.myapplication.data.Folder
-import com.lzy.myapplication.ui.screens.AddExpenseScreen
-import com.lzy.myapplication.ui.screens.FolderDetailScreen
-import com.lzy.myapplication.ui.screens.HomeScreen
-import com.lzy.myapplication.ui.screens.StatisticsScreen
+import com.lzy.myapplication.ui.screens.*
 import com.lzy.myapplication.viewmodel.ExpenseViewModel
 import kotlinx.coroutines.flow.flowOf
 
 sealed class Screen(val route: String, val label: String, val icon: ImageVector) {
     object Home : Screen("home", "首頁", Icons.Default.Home)
     object Statistics : Screen("statistics", "統計", Icons.Default.BarChart)
+    object PiggyBank : Screen("piggy_bank", "存錢罐", Icons.Default.Savings)
 }
 
 @Composable
@@ -43,10 +42,12 @@ fun AppNavigation(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    val screens = listOf(Screen.Home, Screen.Statistics)
+    val screens = listOf(Screen.Home, Screen.Statistics, Screen.PiggyBank)
 
     // 排除 add_expense 和 folder_detail 路由不顯示底部欄
-    val showBottomBar = currentRoute != "add_expense/{folderId}" && currentRoute != "folder_detail/{folderId}/{folderName}"
+    val showBottomBar = currentRoute != "add_expense/{folderId}" &&
+            currentRoute != "folder_detail/{folderId}/{folderName}" &&
+            currentRoute != "piggy_bank_detail/{piggyBankId}"
 
     val folders by viewModel.allFolders.collectAsState()
 
@@ -108,8 +109,14 @@ fun AppNavigation(
                 )
             }
             composable(Screen.Statistics.route) {
-                StatisticsScreen(
-                    viewModel = viewModel
+                StatisticsScreen(viewModel = viewModel)
+            }
+            composable(Screen.PiggyBank.route) {
+                PiggyBankScreen(
+                    viewModel = viewModel,
+                    onPiggyBankClick = { piggyBank ->
+                        navController.navigate("piggy_bank_detail/${piggyBank.id}")
+                    }
                 )
             }
             composable("add_expense/{folderId}") { backStackEntry ->
@@ -147,6 +154,14 @@ fun AppNavigation(
                         navController.navigate("add_expense/$folderId")
                     },
                     onDeleteExpense = onDeleteExpense
+                )
+            }
+            composable("piggy_bank_detail/{piggyBankId}") { backStackEntry ->
+                val piggyBankId = backStackEntry.arguments?.getString("piggyBankId")?.toLongOrNull() ?: 0L
+                PiggyBankDetailScreen(
+                    piggyBankId = piggyBankId,
+                    viewModel = viewModel,
+                    onBack = { navController.popBackStack() }
                 )
             }
         }

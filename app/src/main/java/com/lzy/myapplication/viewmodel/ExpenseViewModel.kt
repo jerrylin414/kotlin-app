@@ -49,6 +49,9 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
     // === Savings goal ===
     val goalProgress: StateFlow<GoalProgress?>
 
+    // === Piggy banks ===
+    val allPiggyBanks: StateFlow<List<PiggyBank>>
+
     // === Folder detail ===
     fun getExpensesByFolder(folderId: Flow<Long?>): Flow<List<Expense>> {
         return folderId.flatMapLatest { id ->
@@ -125,6 +128,10 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
                 GoalProgress(goal, actualSavings, status)
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+        // Piggy banks
+        allPiggyBanks = repository.allPiggyBanks
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     }
 
     // === Expense operations ===
@@ -195,6 +202,71 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
             repository.updateSavingsGoal(existing.copy(reason = reason.ifBlank { null }))
             _goalRefreshTrigger.value = System.currentTimeMillis()
         }
+    }
+
+    // === Piggy bank operations ===
+    fun addPiggyBank(
+        name: String,
+        emoji: String,
+        targetAmount: Double,
+        color: Long,
+        targetDate: Long? = null,
+        challengeType: ChallengeType = ChallengeType.NONE,
+        fixedAmount: Double = 0.0
+    ) {
+        viewModelScope.launch {
+            repository.insertPiggyBank(
+                PiggyBank(
+                    name = name,
+                    emoji = emoji,
+                    targetAmount = targetAmount,
+                    color = color,
+                    targetDate = targetDate,
+                    challengeType = challengeType.name,
+                    fixedAmount = fixedAmount
+                )
+            )
+        }
+    }
+
+    fun deletePiggyBank(piggyBank: PiggyBank) {
+        viewModelScope.launch {
+            repository.deletePiggyBank(piggyBank)
+        }
+    }
+
+    fun deposit(piggyBank: PiggyBank, amount: Double, note: String? = null) {
+        viewModelScope.launch {
+            val newAmount = piggyBank.currentAmount + amount
+            repository.updatePiggyBank(piggyBank.copy(currentAmount = newAmount))
+            repository.insertTransaction(
+                PiggyBankTransaction(
+                    piggyBankId = piggyBank.id,
+                    amount = amount,
+                    type = "DEPOSIT",
+                    note = note
+                )
+            )
+        }
+    }
+
+    fun withdraw(piggyBank: PiggyBank, amount: Double, note: String? = null) {
+        viewModelScope.launch {
+            val newAmount = (piggyBank.currentAmount - amount).coerceAtLeast(0.0)
+            repository.updatePiggyBank(piggyBank.copy(currentAmount = newAmount))
+            repository.insertTransaction(
+                PiggyBankTransaction(
+                    piggyBankId = piggyBank.id,
+                    amount = amount,
+                    type = "WITHDRAW",
+                    note = note
+                )
+            )
+        }
+    }
+
+    fun getTransactionsForPiggyBank(piggyBankId: Long): Flow<List<PiggyBankTransaction>> {
+        return repository.getTransactionsForPiggyBank(piggyBankId)
     }
 
     // === Helper ===

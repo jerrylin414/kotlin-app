@@ -52,6 +52,9 @@ interface ExpenseDao {
     @Delete
     suspend fun deleteFolder(folder: Folder)
 
+    @Query("DELETE FROM expenses WHERE folderId = :folderId")
+    suspend fun deleteExpensesByFolder(folderId: Long)
+
     // === SavingsGoal queries ===
     @Query("SELECT * FROM savings_goals WHERE year = :year AND month = :month LIMIT 1")
     suspend fun getSavingsGoalForMonth(year: Int, month: Int): SavingsGoal?
@@ -61,4 +64,26 @@ interface ExpenseDao {
 
     @Update
     suspend fun updateSavingsGoal(goal: SavingsGoal)
+
+    // === PiggyBank queries ===
+    @Query("SELECT * FROM piggy_banks ORDER BY createdAt DESC")
+    fun getAllPiggyBanks(): Flow<List<PiggyBank>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertPiggyBank(piggyBank: PiggyBank): Long
+
+    @Update
+    suspend fun updatePiggyBank(piggyBank: PiggyBank)
+
+    @Delete
+    suspend fun deletePiggyBank(piggyBank: PiggyBank)
+
+    @Query("SELECT * FROM piggy_bank_transactions WHERE piggyBankId = :piggyBankId ORDER BY date DESC")
+    fun getTransactionsForPiggyBank(piggyBankId: Long): Flow<List<PiggyBankTransaction>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertTransaction(transaction: PiggyBankTransaction): Long
+
+    @Delete
+    suspend fun deleteTransaction(transaction: PiggyBankTransaction)
 }
