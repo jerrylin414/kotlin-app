@@ -15,10 +15,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lzy.myapplication.data.Expense
 import com.lzy.myapplication.data.ExpenseCategory
 import com.lzy.myapplication.ui.components.AnimalAvatar
+import com.lzy.myapplication.ui.components.PeriodSelectorBar
+import com.lzy.myapplication.ui.components.SavingsGoalsSection
 import com.lzy.myapplication.ui.theme.*
+import com.lzy.myapplication.viewmodel.ExpenseViewModel
+import com.lzy.myapplication.viewmodel.FilterMode
 
 data class CategorySummary(
     val category: ExpenseCategory,
@@ -29,13 +34,20 @@ data class CategorySummary(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StatisticsScreen(
-    expenses: List<Expense>,
-    totalExpense: Double
+    viewModel: ExpenseViewModel = viewModel()
 ) {
-    val expenseList = expenses.filter { !it.isIncome }
+    val filterMode by viewModel.filterMode.collectAsState()
+    val selectedYear by viewModel.selectedYear.collectAsState()
+    val selectedMonth by viewModel.selectedMonth.collectAsState()
+    val filteredExpense by viewModel.filteredExpense.collectAsState()
+    val filteredIncome by viewModel.filteredIncome.collectAsState()
+    val filteredExpenses by viewModel.filteredExpenses.collectAsState()
 
-    // 按分類統計
-    val summary = remember(expenseList) {
+    // Category breakdown from filtered expenses
+    val expenseList = filteredExpenses.filter { !it.isIncome }
+    val totalExpenseForCalc = if (expenseList.sumOf { it.amount } > 0) expenseList.sumOf { it.amount } else 1.0
+
+    val summary = remember(expenseList, totalExpenseForCalc) {
         if (expenseList.isEmpty()) {
             emptyList()
         } else {
@@ -51,7 +63,7 @@ fun StatisticsScreen(
                     CategorySummary(
                         category = category,
                         total = total,
-                        percentage = (total / totalExpense).toFloat().coerceIn(0f, 1f)
+                        percentage = (total / totalExpenseForCalc).toFloat().coerceIn(0f, 1f)
                     )
                 }
                 .sortedByDescending { it.total }
@@ -84,37 +96,77 @@ fun StatisticsScreen(
                 .padding(padding),
             contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp)
         ) {
-            // 總支出卡片
+            // 時間篩選
             item {
-                Card(
+                PeriodSelectorBar(
+                    currentMode = filterMode,
+                    selectedYear = selectedYear,
+                    selectedMonth = selectedMonth,
+                    onFilterChanged = { mode, year, month ->
+                        viewModel.setFilterMode(mode, year, month)
+                    }
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+
+            // 儲蓄目標
+            item {
+                SavingsGoalsSection(viewModel = viewModel)
+            }
+
+            // 收入/支出摘要
+            item {
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Coral.copy(alpha = 0.1f)
-                    )
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(20.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                    Card(
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = SoftMint.copy(alpha = 0.15f)
+                        )
                     ) {
-                        Text("💸", fontSize = 40.sp)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            "本月總支出",
-                            fontSize = 14.sp,
-                            color = TextSecondary
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text("📥 收入", fontSize = 13.sp, color = TextSecondary)
+                            Text(
+                                String.format("+%.2f", filteredIncome),
+                                fontSize = 22.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = SoftMintDark
+                            )
+                        }
+                    }
+                    Card(
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Coral.copy(alpha = 0.1f)
                         )
-                        Text(
-                            String.format("%.2f", totalExpense),
-                            fontSize = 32.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Coral
-                        )
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text("📤 支出", fontSize = 13.sp, color = TextSecondary)
+                            Text(
+                                String.format("-%.2f", filteredExpense),
+                                fontSize = 22.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Coral
+                            )
+                        }
                     }
                 }
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(12.dp))
             }
 
             // 分類標題
@@ -141,7 +193,7 @@ fun StatisticsScreen(
                             Text("📊", fontSize = 64.sp)
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
-                                "還沒有支出記錄哦～",
+                                "此時間範圍內沒有支出記錄哦～",
                                 fontSize = 16.sp,
                                 color = TextSecondary
                             )

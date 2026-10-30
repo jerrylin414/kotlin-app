@@ -15,9 +15,14 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.lzy.myapplication.data.Expense
+import com.lzy.myapplication.data.ExpenseCategory
+import com.lzy.myapplication.data.Folder
 import com.lzy.myapplication.ui.screens.AddExpenseScreen
+import com.lzy.myapplication.ui.screens.FolderDetailScreen
 import com.lzy.myapplication.ui.screens.HomeScreen
 import com.lzy.myapplication.ui.screens.StatisticsScreen
+import com.lzy.myapplication.viewmodel.ExpenseViewModel
+import kotlinx.coroutines.flow.flowOf
 
 sealed class Screen(val route: String, val label: String, val icon: ImageVector) {
     object Home : Screen("home", "首頁", Icons.Default.Home)
@@ -30,8 +35,9 @@ fun AppNavigation(
     balance: Double,
     income: Double,
     totalExpense: Double,
-    onAddExpense: (Double, com.lzy.myapplication.data.ExpenseCategory, String, Boolean) -> Unit,
-    onDeleteExpense: (Expense) -> Unit
+    onAddExpense: (Double, ExpenseCategory, String, Boolean, Long?) -> Unit,
+    onDeleteExpense: (Expense) -> Unit,
+    viewModel: ExpenseViewModel
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -39,8 +45,10 @@ fun AppNavigation(
 
     val screens = listOf(Screen.Home, Screen.Statistics)
 
-    // 排除 AddExpense 路由不顯示底部欄
-    val showBottomBar = currentRoute != "add_expense"
+    // 排除 add_expense 和 folder_detail 路由不顯示底部欄
+    val showBottomBar = currentRoute != "add_expense/{folderId}" && currentRoute != "folder_detail/{folderId}/{folderName}"
+
+    val folders by viewModel.allFolders.collectAsState()
 
     Scaffold(
         bottomBar = {
@@ -88,22 +96,57 @@ fun AppNavigation(
                     balance = balance,
                     income = income,
                     expense = totalExpense,
-                    onAddClick = { navController.navigate("add_expense") },
-                    onDeleteExpense = onDeleteExpense
+                    onAddClick = { /* FAB now creates folders */ },
+                    onDeleteExpense = onDeleteExpense,
+                    folders = folders,
+                    onFolderClick = { folder ->
+                        navController.navigate("folder_detail/${folder.id}/${java.net.URLEncoder.encode(folder.name, "UTF-8")}")
+                    },
+                    onCreateFolder = { name -> viewModel.addFolder(name) },
+                    onRenameFolder = { folder, newName -> viewModel.updateFolder(folder, newName) },
+                    onDeleteFolder = { folder -> viewModel.deleteFolder(folder) }
                 )
             }
             composable(Screen.Statistics.route) {
                 StatisticsScreen(
-                    expenses = expenses,
-                    totalExpense = totalExpense
+                    viewModel = viewModel
                 )
             }
-            composable("add_expense") {
+            composable("add_expense/{folderId}") { backStackEntry ->
+                val folderIdStr = backStackEntry.arguments?.getString("folderId")
+                val folderId = if (folderIdStr == "none") null else folderIdStr?.toLongOrNull()
                 AddExpenseScreen(
                     onBack = { navController.popBackStack() },
-                    onSave = { amount, category, note, isIncome ->
-                        onAddExpense(amount, category, note, isIncome)
-                    }
+                    onSave = { amount, category, note, isIncome, selectedFolderId ->
+                        onAddExpense(amount, category, note, isIncome, selectedFolderId ?: folderId)
+                    },
+                    folders = folders,
+                    onAddFolder = { name -> viewModel.addFolder(name) },
+                    initialFolderId = folderId
+                )
+            }
+            composable("folder_detail/{folderId}/{folderName}") { backStackEntry ->
+                val folderId = backStackEntry.arguments?.getString("folderId")?.toLongOrNull() ?: 0L
+                val folderName = try {
+                    java.net.URLDecoder.decode(backStackEntry.arguments?.getString("folderName") ?: "", "UTF-8")
+                } catch (e: Exception) {
+                    backStackEntry.arguments?.getString("folderName") ?: ""
+                }
+                val folder = folders.find { it.id == folderId } ?: Folder(id = folderId, name = folderName)
+
+                val folderExpensesFlow = remember(folderId) {
+                    viewModel.getExpensesByFolder(flowOf(folderId))
+                }
+                val folderExpenses by folderExpensesFlow.collectAsState(initial = emptyList())
+
+                FolderDetailScreen(
+                    folder = folder,
+                    folderExpenses = folderExpenses,
+                    onBack = { navController.popBackStack() },
+                    onAddClick = {
+                        navController.navigate("add_expense/$folderId")
+                    },
+                    onDeleteExpense = onDeleteExpense
                 )
             }
         }

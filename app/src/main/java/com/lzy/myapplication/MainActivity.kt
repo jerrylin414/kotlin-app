@@ -30,10 +30,11 @@ class MainActivity : ComponentActivity() {
                         balance = balance.value,
                         income = income.value,
                         totalExpense = totalExpenseState.value,
-                        onAddExpense = { amount, category, note, isIncome ->
-                            viewModel.addExpense(amount, category, note, isIncome)
+                        onAddExpense = { amount, category, note, isIncome, folderId ->
+                            viewModel.addExpense(amount, category, note, isIncome, folderId)
                         },
-                        onDeleteExpense = { viewModel.deleteExpense(it) }
+                        onDeleteExpense = { viewModel.deleteExpense(it) },
+                        viewModel = viewModel
                     )
                 }
             }

@@ -11,5 +11,6 @@ data class Expense(
     val category: String,
     val note: String = "",
     val isIncome: Boolean = false,
-    val date: Long = System.currentTimeMillis()
+    val date: Long = System.currentTimeMillis(),
+    val folderId: Long? = null
 )

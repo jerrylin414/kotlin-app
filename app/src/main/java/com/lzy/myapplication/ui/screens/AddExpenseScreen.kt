@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,21 +24,29 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lzy.myapplication.data.ExpenseCategory
+import com.lzy.myapplication.data.Folder
 import com.lzy.myapplication.ui.components.CategoryChip
+import com.lzy.myapplication.ui.components.FolderSelectorDialog
 import com.lzy.myapplication.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddExpenseScreen(
     onBack: () -> Unit,
-    onSave: (amount: Double, category: ExpenseCategory, note: String, isIncome: Boolean) -> Unit
+    onSave: (amount: Double, category: ExpenseCategory, note: String, isIncome: Boolean, folderId: Long?) -> Unit,
+    folders: List<Folder> = emptyList(),
+    onAddFolder: (String) -> Unit = {},
+    initialFolderId: Long? = null
 ) {
     var amount by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf(ExpenseCategory.FOOD) }
     var note by remember { mutableStateOf("") }
     var isIncome by remember { mutableStateOf(false) }
+    var selectedFolderId by remember { mutableStateOf(initialFolderId) }
+    var showFolderDialog by remember { mutableStateOf(false) }
 
     val categories = if (isIncome) ExpenseCategory.incomeCategories else ExpenseCategory.expenseCategories
+    val selectedFolder = folders.find { it.id == selectedFolderId }
 
     Scaffold(
         topBar = {
@@ -136,6 +145,37 @@ fun AddExpenseScreen(
                 )
             )
 
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // 選擇資料夾
+            Text(
+                text = "分類資料夾（可選）",
+                fontWeight = FontWeight.Medium,
+                fontSize = 15.sp,
+                color = TextPrimary
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OutlinedButton(
+                onClick = { showFolderDialog = true },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(14.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
+            ) {
+                Icon(
+                    Icons.Default.Folder,
+                    contentDescription = null,
+                    tint = if (selectedFolder != null) Lavender else TextLight,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = selectedFolder?.name ?: "不分類",
+                    color = if (selectedFolder != null) Lavender else TextSecondary,
+                    fontWeight = if (selectedFolder != null) FontWeight.Medium else FontWeight.Normal
+                )
+            }
+
             Spacer(modifier = Modifier.weight(1f))
 
             // 保存按鈕
@@ -143,7 +183,7 @@ fun AddExpenseScreen(
                 onClick = {
                     val amt = amount.toDoubleOrNull() ?: 0.0
                     if (amt > 0) {
-                        onSave(amt, selectedCategory, note, isIncome)
+                        onSave(amt, selectedCategory, note, isIncome, selectedFolderId)
                         onBack()
                     }
                 },
@@ -162,6 +202,19 @@ fun AddExpenseScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
         }
+    }
+
+    // Folder selector dialog
+    if (showFolderDialog) {
+        FolderSelectorDialog(
+            folders = folders,
+            selectedFolderId = selectedFolderId,
+            onSelect = { selectedFolderId = it },
+            onCreateFolder = { name ->
+                onAddFolder(name)
+            },
+            onDismiss = { showFolderDialog = false }
+        )
     }
 }
 

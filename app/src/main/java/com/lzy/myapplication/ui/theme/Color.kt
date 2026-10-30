@@ -24,3 +24,11 @@ val CoralDark = Color(0xFFD9737A)
 val TextPrimary = Color(0xFF4A4A4A)
 val TextSecondary = Color(0xFF8A8A8A)
 val TextLight = Color(0xFFBDBDBD)
+
+// 儲蓄目標警報色彩
+val AlertRed = Color(0xFFE57373)
+val AlertRedLight = Color(0xFFFFEBEE)
+val AlertYellow = Color(0xFFFFD54F)
+val AlertYellowLight = Color(0xFFFFF8E1)
+val AlertGreen = Color(0xFF81C784)
+val AlertGreenLight = Color(0xFFE8F5E9)
